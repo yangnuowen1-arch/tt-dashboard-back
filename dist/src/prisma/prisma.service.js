@@ -19,8 +19,10 @@ let PrismaService = class PrismaService extends client_1.PrismaClient {
         if (!connectionString) {
             throw new Error("DATABASE_URL is not set");
         }
+        const url = new URL(connectionString);
+        const schema = url.searchParams.get("schema") ?? "public";
         super({
-            adapter: new adapter_pg_1.PrismaPg({ connectionString }),
+            adapter: new adapter_pg_1.PrismaPg({ connectionString }, { schema }),
         });
     }
     async onModuleInit() {
