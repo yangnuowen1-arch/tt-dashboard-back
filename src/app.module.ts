@@ -6,10 +6,16 @@ import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { ResponseInterceptor } from "./common/interceptors/response.interceptor";
+import { CreativesModule } from "./creatives/creatives.module";
 import { PrismaModule } from "./prisma/prisma.module";
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
+    AuthModule,
+    CreativesModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,

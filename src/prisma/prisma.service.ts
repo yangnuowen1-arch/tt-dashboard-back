@@ -22,6 +22,7 @@ export class PrismaService
     const url = new URL(connectionString);
     const schema = url.searchParams.get("schema") ?? "public";
 
+    //初始化方式
     super({
       adapter: new PrismaPg({ connectionString }, { schema }),
     });

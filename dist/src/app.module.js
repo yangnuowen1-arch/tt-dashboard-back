@@ -15,13 +15,19 @@ const app_service_1 = require("./app.service");
 const auth_module_1 = require("./auth/auth.module");
 const http_exception_filter_1 = require("./common/filters/http-exception.filter");
 const response_interceptor_1 = require("./common/interceptors/response.interceptor");
+const creatives_module_1 = require("./creatives/creatives.module");
 const prisma_module_1 = require("./prisma/prisma.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [config_1.ConfigModule.forRoot({ isGlobal: true }), prisma_module_1.PrismaModule, auth_module_1.AuthModule],
+        imports: [
+            config_1.ConfigModule.forRoot({ isGlobal: true }),
+            prisma_module_1.PrismaModule,
+            auth_module_1.AuthModule,
+            creatives_module_1.CreativesModule,
+        ],
         controllers: [app_controller_1.AppController],
         providers: [
             app_service_1.AppService,

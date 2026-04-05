@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import { WsAdapter } from "@nestjs/platform-ws";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { PrismaService } from "./prisma/prisma.service";
@@ -8,6 +9,7 @@ import { PrismaService } from "./prisma/prisma.service";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
+  app.useWebSocketAdapter(new WsAdapter(app));
 
   const prismaService = app.get<PrismaService>(PrismaService);
   prismaService.enableShutdownHooks(app);
