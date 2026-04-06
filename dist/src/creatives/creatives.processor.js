@@ -119,7 +119,8 @@ let CreativesProcessor = CreativesProcessor_1 = class CreativesProcessor {
             format: "jpeg",
             width: 720,
         };
-        const scaleMode = repairConfig?.video?.scaleMode ?? "cover";
+        const scaleMode = repairConfig?.video?.scaleMode ??
+            "cover";
         const outputKey = objectKey.replace(/(\.[^.]+)$/, "_processed$1");
         const coverKey = objectKey.replace(/(\.[^.]+)$/, "_thumb.jpg");
         const localOutput = path.join(this.tmpDir, `${jobId}_output.mp4`);

@@ -65,7 +65,7 @@ export class CreativesProcessor {
       const errorMsg = err instanceof Error ? err.message : String(err);
       this.logger.error(`Job ${jobId} failed: ${errorMsg}`);
 
-      await (this.prisma as any).creative_jobs.update({
+      await this.prisma.creative_jobs.update({
         where: { job_id: jobId },
         data: { status: "failed", error: errorMsg },
       });
@@ -100,7 +100,11 @@ export class CreativesProcessor {
       container: string;
       videoCodec: string;
       audioCodec: string;
-    } = repairConfig?.video?.transcodeTo ?? {
+    } = ((repairConfig?.video as Record<string, unknown>)?.transcodeTo as {
+      container: string;
+      videoCodec: string;
+      audioCodec: string;
+    }) ?? {
       container: "mp4",
       videoCodec: "h264",
       audioCodec: "aac",
@@ -115,7 +119,9 @@ export class CreativesProcessor {
         format: "jpeg",
         width: 720,
       };
-    const scaleMode: string = repairConfig?.video?.scaleMode ?? "cover";
+    const scaleMode: string =
+      ((repairConfig?.video as Record<string, unknown>)?.scaleMode as string) ??
+      "cover";
 
     const outputKey = objectKey.replace(/(\.[^.]+)$/, "_processed$1");
     const coverKey = objectKey.replace(/(\.[^.]+)$/, "_thumb.jpg");
@@ -188,7 +194,7 @@ export class CreativesProcessor {
       : undefined;
 
     // Update DB
-    await (this.prisma as any).creative_jobs.update({
+    await this.prisma.creative_jobs.update({
       where: { job_id: jobId },
       data: {
         status: "ready",
@@ -215,7 +221,7 @@ export class CreativesProcessor {
     // For images, just upload as-is (could add resize logic later)
     const processedUrl = this.storage.getPublicUrl(objectKey);
 
-    await (this.prisma as any).creative_jobs.update({
+    await this.prisma.creative_jobs.update({
       where: { job_id: jobId },
       data: {
         status: "ready",

@@ -57,32 +57,42 @@ let StorageService = StorageService_1 = class StorageService {
         this.config = config;
     }
     async onModuleInit() {
-        const endPoint = this.config.get("MINIO_ENDPOINT", "localhost");
-        const port = this.config.get("MINIO_PORT", 9000);
-        const useSSL = this.config.get("MINIO_USE_SSL", "false") === "true";
-        const accessKey = this.config.get("MINIO_ACCESS_KEY", "minioadmin");
-        const secretKey = this.config.get("MINIO_SECRET_KEY", "minioadmin");
-        this.bucket = this.config.get("MINIO_BUCKET", "creatives");
-        this.publicEndpoint = this.config.get("MINIO_PUBLIC_ENDPOINT", `http://${endPoint}:${port}`);
-        this.client = new Minio.Client({
+        const endPoint = this.config.get("S3_ENDPOINT", "localhost");
+        const portStr = this.config.get("S3_PORT", "");
+        const useSSL = this.config.get("S3_USE_SSL", "true") === "true";
+        const accessKey = this.config.get("S3_ACCESS_KEY", "");
+        const secretKey = this.config.get("S3_SECRET_KEY", "");
+        const region = this.config.get("S3_REGION", "auto");
+        this.bucket = this.config.get("S3_BUCKET", "creatives");
+        this.publicEndpoint = this.config.get("S3_PUBLIC_URL", "");
+        const clientOpts = {
             endPoint,
-            port,
             useSSL,
             accessKey,
             secretKey,
-        });
-        const exists = await this.client.bucketExists(this.bucket);
-        if (!exists) {
-            await this.client.makeBucket(this.bucket);
-            this.logger.log(`Bucket "${this.bucket}" created`);
+            region,
+            pathStyle: true,
+        };
+        if (portStr) {
+            clientOpts.port = Number(portStr);
         }
-        this.logger.log(`MinIO connected → ${endPoint}:${port}/${this.bucket}`);
+        this.client = new Minio.Client(clientOpts);
+        try {
+            const exists = await this.client.bucketExists(this.bucket);
+            if (!exists) {
+                this.logger.warn(`Bucket "${this.bucket}" not found. Please create it in your storage dashboard.`);
+            }
+        }
+        catch {
+            this.logger.warn(`Could not check bucket existence (normal for R2)`);
+        }
+        this.logger.log(`S3-compatible storage connected → ${endPoint}/${this.bucket}`);
     }
     async presignPut(objectKey, expirySeconds = 3600) {
         return this.client.presignedPutObject(this.bucket, objectKey, expirySeconds);
     }
     getPublicUrl(objectKey) {
-        return `${this.publicEndpoint}/${this.bucket}/${objectKey}`;
+        return `${this.publicEndpoint}/${objectKey}`;
     }
     async downloadToFile(objectKey, filePath) {
         await this.client.fGetObject(this.bucket, objectKey, filePath);

@@ -12,32 +12,45 @@ export class StorageService implements OnModuleInit {
   constructor(private readonly config: ConfigService) {}
 
   async onModuleInit(): Promise<void> {
-    const endPoint = this.config.get<string>("MINIO_ENDPOINT", "localhost");
-    const port = this.config.get<number>("MINIO_PORT", 9000);
-    const useSSL = this.config.get<string>("MINIO_USE_SSL", "false") === "true";
-    const accessKey = this.config.get<string>("MINIO_ACCESS_KEY", "minioadmin");
-    const secretKey = this.config.get<string>("MINIO_SECRET_KEY", "minioadmin");
-    this.bucket = this.config.get<string>("MINIO_BUCKET", "creatives");
-    this.publicEndpoint = this.config.get<string>(
-      "MINIO_PUBLIC_ENDPOINT",
-      `http://${endPoint}:${port}`,
-    );
+    const endPoint = this.config.get<string>("S3_ENDPOINT", "localhost");
+    const portStr = this.config.get<string>("S3_PORT", "");
+    const useSSL = this.config.get<string>("S3_USE_SSL", "true") === "true";
+    const accessKey = this.config.get<string>("S3_ACCESS_KEY", "");
+    const secretKey = this.config.get<string>("S3_SECRET_KEY", "");
+    const region = this.config.get<string>("S3_REGION", "auto");
+    this.bucket = this.config.get<string>("S3_BUCKET", "creatives");
+    this.publicEndpoint = this.config.get<string>("S3_PUBLIC_URL", "");
 
-    this.client = new Minio.Client({
+    const clientOpts: Minio.ClientOptions = {
       endPoint,
-      port,
       useSSL,
       accessKey,
       secretKey,
-    });
+      region,
+      pathStyle: true,
+    };
 
-    const exists = await this.client.bucketExists(this.bucket);
-    if (!exists) {
-      await this.client.makeBucket(this.bucket);
-      this.logger.log(`Bucket "${this.bucket}" created`);
+    if (portStr) {
+      clientOpts.port = Number(portStr);
     }
 
-    this.logger.log(`MinIO connected → ${endPoint}:${port}/${this.bucket}`);
+    this.client = new Minio.Client(clientOpts);
+
+    // R2 doesn't support makeBucket — bucket must be pre-created in the dashboard
+    try {
+      const exists = await this.client.bucketExists(this.bucket);
+      if (!exists) {
+        this.logger.warn(
+          `Bucket "${this.bucket}" not found. Please create it in your storage dashboard.`,
+        );
+      }
+    } catch {
+      this.logger.warn(`Could not check bucket existence (normal for R2)`);
+    }
+
+    this.logger.log(
+      `S3-compatible storage connected → ${endPoint}/${this.bucket}`,
+    );
   }
 
   /**
@@ -53,9 +66,11 @@ export class StorageService implements OnModuleInit {
 
   /**
    * Build the public / CDN URL for an object.
+   * For R2 with custom domain, the URL is: https://pub.example.com/{objectKey}
+   * For MinIO, set S3_PUBLIC_URL=http://localhost:9000/creatives
    */
   getPublicUrl(objectKey: string): string {
-    return `${this.publicEndpoint}/${this.bucket}/${objectKey}`;
+    return `${this.publicEndpoint}/${objectKey}`;
   }
 
   /**

@@ -42,7 +42,7 @@ export class CreativesService {
       const assetUrl = this.storage.getPublicUrl(objectKey);
 
       // Create DB record
-      await (this.prisma as any).creative_jobs.create({
+      await this.prisma.creative_jobs.create({
         data: {
           job_id: jobId,
           client_item_id: item.clientItemId,
@@ -72,7 +72,7 @@ export class CreativesService {
   }
 
   async uploadComplete(dto: UploadCompleteDto): Promise<void> {
-    const job = await (this.prisma as any).creative_jobs.findUnique({
+    const job = await this.prisma.creative_jobs.findUnique({
       where: { job_id: dto.jobId },
     });
 
@@ -81,7 +81,7 @@ export class CreativesService {
     }
 
     // Update status and optionally store repairConfig
-    await (this.prisma as any).creative_jobs.update({
+    await this.prisma.creative_jobs.update({
       where: { job_id: dto.jobId },
       data: {
         status: "queued",
@@ -104,7 +104,7 @@ export class CreativesService {
   }
 
   async publish(dto: PublishDto): Promise<PublishResult> {
-    const job = await (this.prisma as any).creative_jobs.findFirst({
+    const job = await this.prisma.creative_jobs.findFirst({
       where: { client_item_id: dto.clientItemId },
     });
 
@@ -116,7 +116,7 @@ export class CreativesService {
 
     const publishedId = `pub_${uuidv4().slice(0, 8)}`;
 
-    await (this.prisma as any).creative_jobs.update({
+    await this.prisma.creative_jobs.update({
       where: { job_id: job.job_id },
       data: {
         status: "published",
